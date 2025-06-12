@@ -1,0 +1,40 @@
+[project]
+name = "security-checker"
+version = "0.1.1"
+description = "A tool to check security-related issues in project."
+authors = [
+    { name = "Ja-sonYun", email = "killa30867@gmail.com" }
+]
+dependencies = [
+    "pydantic>=2.11.5",
+    "httpx>=0.28.1",
+    "rich>=14.0.0",
+    "pydantic-argparse>=0.10.0",
+    "openai>=1.86.0",
+    "pyyaml>=6.0.2",
+    "pydantic-settings>=2.9.1",
+    "slack-sdk>=3.35.0",
+    "aiohttp>=3.12.12",
+]
+readme = "README.md"
+requires-python = ">= 3.10"
+
+[project.scripts]
+security-checker = "security_checker.cli:main"
+
+[build-system]
+requires = ["hatchling==1.26.3", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "ruff>=0.11.13",
+    "ty>=0.0.1a10",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/security_checker"]
