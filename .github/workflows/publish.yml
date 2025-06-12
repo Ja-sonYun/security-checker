@@ -1,0 +1,31 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install the latest version of rye
+        uses: eifinger/setup-rye@v4
+
+      - name: Sync deps
+        run: rye sync --no-dev
+
+      - name: Build
+        run: rye build --wheel
+
+      - name: Build & publish
+        env:
+          PYPI_KEY: ${{ secrets.PYPI_API_TOKEN }}
+        run: rye publish --token "$PYPI_KEY" --yes
