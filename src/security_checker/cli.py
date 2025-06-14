@@ -27,6 +27,7 @@ from security_checker.checkers.vulnerabilities.vulnerabilities import (
 )
 from security_checker.console import console
 from security_checker.notifiers._base import NotifierBase
+from security_checker.notifiers.markdown import MarkdownNotifier
 from security_checker.notifiers.slack import SlackNotifier
 from security_checker.notifiers.stdout import StdoutNotifier
 from security_checker.vendors._base import VendorBase
@@ -54,10 +55,12 @@ supported_vendors: dict[Vendors, type[VendorBase]] = {
 Notifiers = Literal[
     "stdout",
     "slack",
+    "markdown",
 ]
 supported_notifiers: dict[Notifiers, type[NotifierBase]] = {
     "stdout": StdoutNotifier,
     "slack": SlackNotifier,
+    "markdown": MarkdownNotifier,
 }
 
 
@@ -93,6 +96,7 @@ class Arguments(BaseSettings, cli_exit_on_error=True):
 
 
 async def _handle_license(args: LicenseCheckerSettings) -> None:
+    path = Path(args.path)
     vendors: list[LicenseCheckerTrait] = []
     for vendor_name in args.vendor:
         vendor_class = supported_vendors.get(vendor_name)
@@ -107,12 +111,11 @@ async def _handle_license(args: LicenseCheckerSettings) -> None:
         notifier_class = supported_notifiers.get(notifier_name)
         if not notifier_class:
             raise ValueError(f"Notifier {notifier_name} is not supported.")
-        notifiers.append(notifier_class())
+        notifiers.append(notifier_class(path))
     console.verbose(f"Using vendors: {args.vendor}")
 
     license_checker = LicenseChecker()
 
-    path = Path(args.path)
     if not path.exists():
         raise ValueError(f"Path {path} does not exist.")
 
@@ -129,6 +132,7 @@ async def _handle_license(args: LicenseCheckerSettings) -> None:
 
 
 async def _handle_vulnerability(args: VulnerabilityCheckerSettings) -> None:
+    path = Path(args.path)
     vendors: list[VulnerabilityCheckerTrait] = []
     for vendor_name in args.vendor:
         vendor_class = supported_vendors.get(vendor_name)
@@ -143,12 +147,11 @@ async def _handle_vulnerability(args: VulnerabilityCheckerSettings) -> None:
         notifier_class = supported_notifiers.get(notifier_name)
         if not notifier_class:
             raise ValueError(f"Notifier {notifier_name} is not supported.")
-        notifiers.append(notifier_class())
+        notifiers.append(notifier_class(path))
     console.verbose(f"Using notifiers: {args.notify}")
 
     vulnerability_checker = VulnerabilityChecker()
 
-    path = Path(args.path)
     if not path.exists():
         raise ValueError(f"Path {path} does not exist.")
 

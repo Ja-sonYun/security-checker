@@ -14,5 +14,9 @@ class CheckResultInterface(ABC):
     @abstractmethod
     async def llm_summary(self) -> str: ...
 
+    @property
+    @abstractmethod
+    def checker_name(self) -> str: ...
+
 
 class CheckResultBase(CheckResultInterface, BaseModel): ...

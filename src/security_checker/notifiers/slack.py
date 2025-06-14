@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from slack_sdk.web.async_client import AsyncWebClient
@@ -23,8 +25,11 @@ class SlackSettings(BaseSettings):
 class SlackNotifier(NotifierBase):
     def __init__(
         self,
+        path: Path,
         settings: SlackSettings | None = None,
     ) -> None:
+        super().__init__(path)
+
         self.settings = settings or SlackSettings()
 
         if not self.settings.slack_token or not self.settings.slack_channel_id:
@@ -42,16 +47,45 @@ class SlackNotifier(NotifierBase):
 
         try:
             console.verbose("Sending notification to Slack...")
-            response = await self.client.chat_postMessage(
+            await self.client.chat_postMessage(
                 channel=self.channel_id,
-                text=llm_summary,
+                text=f"## {result.checker_name} Results for {self.remote} on branch {self.branch}:\n{llm_summary}",
+                blocks=[
+                    {
+                        "type": "header",
+                        "text": {
+                            "type": "plain_text",
+                            "text": f"Security Check Results for {self.remote} on branch {self.branch}",
+                            "emoji": True,
+                        },
+                    },
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": llm_summary,
+                        },
+                    },
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": "For more details, visit the repository security page.",
+                        },
+                        "accessory": {
+                            "type": "button",
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Open",
+                                "emoji": True,
+                            },
+                            "url": f"{self.repository_url}/security/dependabot",
+                        },
+                    },
+                ],
             )
-            if response["ok"]:
-                console.verbose("Notification sent successfully to Slack.")
-                return True
-            else:
-                console.error(f"Failed to send notification: {response['error']}")
-                return False
+
+            return True
         except Exception as e:
             console.error(f"Error sending notification to Slack: {e}")
             return False
