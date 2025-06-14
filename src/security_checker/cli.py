@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from pathlib import Path
 from typing import Literal
 
@@ -183,7 +184,7 @@ async def cli():
             CliApp.run(Arguments, cli_args=["--help"])
     except Exception as e:
         console.verbose(f"[red]An error occurred:[/red] {e}")
-        return
+        sys.exit(1)
 
 
 def main():
