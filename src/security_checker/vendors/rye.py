@@ -7,7 +7,7 @@ from security_checker.vendors.registries.pypi import PyPiRegistry
 class RyeVendor(PyPiRegistry):
     @property
     def name(self) -> str:
-        return "Rye"
+        return "Python Rye"
 
     @property
     def dependency_manager_name(self) -> str:

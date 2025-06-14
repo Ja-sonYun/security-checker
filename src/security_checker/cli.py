@@ -74,7 +74,10 @@ class BaseCheckerSetting(BaseSettings):
         description="List of notifiers to use for reporting results.",
         validation_alias=AliasChoices("n", "notify"),
     )
-    verbose: CliImplicitFlag[bool] = Field(description="Enable verbose output.")
+    verbose: CliImplicitFlag[bool] = Field(
+        description="Enable verbose output.",
+        default=False,
+    )
 
 
 class LicenseCheckerSettings(BaseCheckerSetting): ...
