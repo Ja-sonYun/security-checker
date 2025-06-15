@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 from security_checker.checkers._models import CheckResultInterface
+from security_checker.console import console
 from security_checker.utils.git import get_git_info
 
 
@@ -16,7 +17,7 @@ class NotifierBase(ABC):
         self.repo = git_info.get("repo", "unknown")
         self.repository_url = f"https://github.com/{self.user}/{self.repo}"
 
-        print(
+        console.verbose(
             f"Notifier initialized for repository {self.user}/{self.repo} "
             f"on branch {self.branch} with remote {self.remote}."
         )
