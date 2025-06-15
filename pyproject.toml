@@ -1,6 +1,6 @@
 [project]
 name = "security-checker"
-version = "0.1.4"
+version = "0.1.5"
 description = "A tool to check security-related issues in project."
 authors = [
     { name = "Ja-sonYun", email = "killa30867@gmail.com" }
