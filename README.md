@@ -114,3 +114,9 @@ src/security_checker/
 1. Create a new notifier class in `src/security_checker/notifiers/`
 2. Extend the `NotifierBase` class
 3. Add the notifier to the supported notifiers list in `cli.py`
+
+## To-Do
+
+- [ ] Implement credential scanning
+- [ ] Support result caching to avoid redundant checks
+- [ ] Add unit tests for all components
