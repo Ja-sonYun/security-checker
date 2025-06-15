@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Sequence
 
 import httpx
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 from security_checker.checkers.vulnerabilities._models import (
     Dependency,
@@ -133,6 +134,10 @@ class GithubSecurityAdvisoryRegistry(VulnerabilityCheckerTrait):
             )
         return extracted
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_fixed(2),
+    )
     async def query_vulnerabilities(
         self, package_name: str, version: str
     ) -> VulnerablePackage:
@@ -160,6 +165,10 @@ class GithubSecurityAdvisoryRegistry(VulnerabilityCheckerTrait):
                 vulnerabilities=vulns,
             )
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_fixed(2),
+    )
     async def scan_dependencies_for_vulnerabilities(
         self, packages: Sequence[Dependency]
     ) -> Sequence[VulnerablePackage]:

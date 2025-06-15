@@ -2,6 +2,7 @@ import asyncio
 import os
 
 import httpx
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 from security_checker.checkers.licenses._vendor_trait import LicenseCheckerTrait
 from security_checker.vendors.registries.github_security_advisory import (
@@ -32,6 +33,10 @@ class NpmJSRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
     def get_echosystem_name(self) -> str:
         return "NPM"
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_fixed(2),
+    )
     async def query_license(self, package_name: str, version: str) -> str:
         async with _npm_semaphore:
             try:
