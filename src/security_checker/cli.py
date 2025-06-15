@@ -1,9 +1,10 @@
 import asyncio
 import sys
+import traceback
 from pathlib import Path
 from typing import Literal
 
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, ValidationError
 from pydantic_settings import (
     BaseSettings,
     CliApp,
@@ -167,11 +168,11 @@ async def _handle_vulnerability(args: VulnerabilityCheckerSettings) -> None:
     )
 
 
-async def cli():
+async def cli() -> None:
     try:
         args = CliApp.run(Arguments)
-    except SettingsError as e:
-        console.print(f"[red]Error parsing arguments:[/red] {e}")
+    except (SettingsError, ValidationError) as e:
+        console.error(f"Error parsing arguments: {e}")
         return
 
     try:
@@ -185,10 +186,13 @@ async def cli():
             await _handle_vulnerability(args.vuln)
         else:
             CliApp.run(Arguments, cli_args=["--help"])
+
     except Exception as e:
-        console.verbose(f"[red]An error occurred:[/red] {e}")
+        traceback_text = traceback.format_exc()
+        console.verbose(f"Traceback: {traceback_text}")
+        console.error(f"An error occurred: {e}")
         sys.exit(1)
 
 
-def main():
+def main() -> None:
     asyncio.run(cli())

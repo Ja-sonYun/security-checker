@@ -9,11 +9,12 @@ class Console(_Console):
         super().__init__()
         self._verbose = False
 
-    def warning(self, message: Any) -> None:
-        warnings.warn(message, UserWarning, stacklevel=2)
-        super().print(f"[yellow]Warning:[/yellow] {' '.join(message)}", highlight=False)
+    def warning(self, *message: Any) -> None:
+        formatted_message = " ".join(str(m) for m in message)
+        warnings.warn(formatted_message, UserWarning, stacklevel=2)
+        super().print(f"[yellow]Warning:[/yellow] {formatted_message}", highlight=False)
 
-    def error(self, message: Any) -> None:
+    def error(self, *message: Any) -> None:
         super().print(f"[red]Error:[/red] {' '.join(message)}", highlight=False)
 
     def verbose(self, *message: Any) -> None:
