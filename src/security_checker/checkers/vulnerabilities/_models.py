@@ -161,7 +161,7 @@ class VulnerabilityCheckResult(CheckResultBase):
         )
 
         summary = response.choices[0].message.content or "No summary available."
-        footer = "Visit {repository_url}/security/vulnerabilities for more details."
+        footer = "Visit {repository_url}/security/dependabot for more details."
 
         return f"{summary}\n\n{footer}"
 
