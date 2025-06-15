@@ -55,7 +55,7 @@ class SlackNotifier(NotifierBase):
                         "type": "header",
                         "text": {
                             "type": "plain_text",
-                            "text": f"Security Check Results for {self.remote} on branch {self.branch}",
+                            "text": f"{result.checker_name} Results for {self.repo} on branch {self.branch}",
                             "emoji": True,
                         },
                     },
@@ -63,23 +63,9 @@ class SlackNotifier(NotifierBase):
                         "type": "section",
                         "text": {
                             "type": "mrkdwn",
-                            "text": llm_summary,
-                        },
-                    },
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": "For more details, visit the repository security page.",
-                        },
-                        "accessory": {
-                            "type": "button",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Open",
-                                "emoji": True,
-                            },
-                            "url": f"{self.repository_url}/security/dependabot",
+                            "text": llm_summary.replace(
+                                "{repository_url}", self.repository_url
+                            ),
                         },
                     },
                 ],

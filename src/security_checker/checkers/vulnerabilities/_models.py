@@ -160,7 +160,10 @@ class VulnerabilityCheckResult(CheckResultBase):
             ],
         )
 
-        return response.choices[0].message.content or "No summary available."
+        summary = response.choices[0].message.content or "No summary available."
+        footer = "Visit {repository_url}/security/vulnerabilities for more details."
+
+        return f"{summary}\n\n{footer}"
 
     async def llm_summary(self) -> str:
         return await self.get_critical_vulnerabilities_summary()
