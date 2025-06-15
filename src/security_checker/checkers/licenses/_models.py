@@ -3,6 +3,7 @@ from collections.abc import Mapping, Sequence
 from security_checker.checkers._models import CheckResultBase
 from security_checker.checkers.licenses._known_licenses import detect_license_score
 from security_checker.checkers.licenses._settings import LicenseCheckerSettings
+from security_checker.utils.text import strip_codeblock
 from security_checker.vendors._models import Dependency, DependencyRoot
 
 
@@ -111,4 +112,4 @@ class LicenseCheckResult(CheckResultBase):
         return summary.strip()
 
     async def llm_summary(self) -> str:
-        return await self.get_non_commercial_licenses_summary()
+        return strip_codeblock(await self.get_non_commercial_licenses_summary())

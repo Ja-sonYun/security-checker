@@ -7,6 +7,7 @@ from security_checker.checkers._models import CheckResultBase
 from security_checker.checkers.vulnerabilities._settings import (
     VulnerabilityCheckerSettings,
 )
+from security_checker.utils.text import strip_codeblock
 from security_checker.vendors._models import Dependency, DependencyRoot
 
 
@@ -166,4 +167,4 @@ class VulnerabilityCheckResult(CheckResultBase):
         return f"{summary}\n\n{footer}"
 
     async def llm_summary(self) -> str:
-        return await self.get_critical_vulnerabilities_summary()
+        return strip_codeblock(await self.get_critical_vulnerabilities_summary())
