@@ -1,6 +1,6 @@
 [project]
 name = "security-checker"
-version = "0.2.1"
+version = "0.2.2"
 description = "A comprehensive command-line tool to check security-related issues in your projects, including vulnerability scanning and license compliance checking."
 authors = [
     { name = "Ja-sonYun", email = "killa30867@gmail.com" }
