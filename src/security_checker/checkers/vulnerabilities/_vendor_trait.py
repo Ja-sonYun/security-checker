@@ -21,6 +21,9 @@ class VulnerabilityCheckerTrait(VendorBase, LockFileBaseTrait):
         version: str,
     ) -> VulnerablePackage: ...
 
+    @abstractmethod
+    def is_in_version_range(self, version: str, version_range: str) -> bool: ...
+
     async def scan_dependencies_for_vulnerabilities(
         self, packages: Sequence[Dependency]
     ) -> Sequence[VulnerablePackage]:

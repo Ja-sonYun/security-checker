@@ -61,6 +61,8 @@ multidict==6.4.4
     # via yarl
 openai==1.86.0
     # via security-checker
+packaging==25.0
+    # via security-checker
 propcache==0.3.2
     # via aiohttp
     # via yarl
@@ -82,6 +84,8 @@ python-dotenv==1.1.0
 pyyaml==6.0.2
     # via security-checker
 rich==14.0.0
+    # via security-checker
+semantic-version==2.10.0
     # via security-checker
 slack-sdk==3.35.0
     # via security-checker
