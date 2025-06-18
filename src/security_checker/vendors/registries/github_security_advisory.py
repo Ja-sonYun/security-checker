@@ -106,6 +106,7 @@ class GithubSecurityAdvisoryRegistry(VulnerabilityCheckerTrait):
     ) -> list[VulnerabilityInfo]:
         extracted: list[VulnerabilityInfo] = []
         for node in raw_nodes:
+            vulnerable_version_range = node.get("vulnerableVersionRange", "UNKNOWN")
             advisory = node.get("advisory", {})
             identifiers = advisory.get("identifiers", [])
             vuln_id = next(
@@ -130,6 +131,7 @@ class GithubSecurityAdvisoryRegistry(VulnerabilityCheckerTrait):
                         ),
                         "UNKNOWN",
                     ),
+                    version_range=vulnerable_version_range,
                 )
             )
         return extracted

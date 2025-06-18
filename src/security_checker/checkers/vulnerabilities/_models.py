@@ -16,7 +16,7 @@ class VulnerabilityInfo(BaseModel):
     severity: str
     description: str
     published_date: datetime | None = None
-    fix_version: str | None = None
+    version_range: str | None = None
     reference_url: str | None = None
 
 
@@ -99,7 +99,7 @@ class VulnerabilityCheckResult(CheckResultBase):
                         f"   - Severity: {vuln.severity}\n"
                         f"   - Description: {vuln.description}\n"
                         f"   - Published Date: {vuln.published_date or 'N/A'}\n"
-                        f"   - Fix Version: {vuln.fix_version or 'N/A'}\n"
+                        f"   - Version Range: {vuln.version_range or 'N/A'}\n"
                         f"   - Reference URL: {vuln.reference_url or 'N/A'}"
                     )
                 else:
