@@ -16,6 +16,8 @@ aiohttp==3.12.12
     # via security-checker
 aiosignal==1.3.2
     # via aiohttp
+aiosqlite==0.20.0
+    # via security-checker
 annotated-types==0.7.0
     # via pydantic
 anyio==4.9.0
