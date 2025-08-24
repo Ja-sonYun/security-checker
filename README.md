@@ -42,6 +42,16 @@ security-checker vuln /path/to/your/project
 
 ## Configuration
 
+### License Cache
+
+To cache license lookups between runs, set the SQLite database path via the
+`LICENSE_CACHE_DB_PATH` environment variable. If not set, a file named
+`license_cache.sqlite` will be created in the current working directory.
+
+```bash
+export LICENSE_CACHE_DB_PATH="/tmp/license_cache.sqlite"
+```
+
 ### Slack Notifications
 
 To use Slack notifications, set the following environment variables:
