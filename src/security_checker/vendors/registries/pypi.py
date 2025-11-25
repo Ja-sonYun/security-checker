@@ -6,12 +6,14 @@ from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 from tenacity import retry, stop_after_attempt, wait_fixed
 
+from security_checker.cache import SqliteCache
 from security_checker.checkers.licenses._vendor_trait import LicenseCheckerTrait
 from security_checker.vendors.registries.github_security_advisory import (
     GithubSecurityAdvisoryRegistry,
 )
 
 _pypi_semaphore = asyncio.Semaphore(10)
+_cache = SqliteCache()
 
 
 class PyPiRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
@@ -40,16 +42,25 @@ class PyPiRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
         wait=wait_fixed(2),
     )
     async def query_license(self, package_name: str, version: str) -> str:
+        # Check cache first
+        cached_license = await _cache.get_license("pypi", package_name, version)
+        if cached_license is not None:
+            return cached_license
+
         async with _pypi_semaphore:
             try:
                 response = await self._pypi_client.get(
                     f"{self._pypi_url}/{package_name}/{version}/json"
                 )
             except httpx.TimeoutException:
-                return "TIMEOUT"
+                license_result = "TIMEOUT"
+                await _cache.set_license("pypi", package_name, version, license_result)
+                return license_result
 
             if response.status_code == 404:
-                return "UNKNOWN"
+                license_result = "UNKNOWN"
+                await _cache.set_license("pypi", package_name, version, license_result)
+                return license_result
             if response.status_code != 200:
                 response.raise_for_status()
 
@@ -57,7 +68,9 @@ class PyPiRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
 
             # Check if the response contains the necessary information
             if "info" not in data or "license" not in data["info"]:
-                return "UNKNOWN"
+                license_result = "UNKNOWN"
+                await _cache.set_license("pypi", package_name, version, license_result)
+                return license_result
 
             package_info = data["info"]
             license_info: str | None = None
@@ -85,7 +98,9 @@ class PyPiRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
             if license_info is None:
                 license_info = package_info.get("license_expression", None)
 
-            return license_info if license_info else "UNKNOWN"
+            license_result = license_info if license_info else "UNKNOWN"
+            await _cache.set_license("pypi", package_name, version, license_result)
+            return license_result
 
     def is_in_version_range(self, version: str, version_range: str) -> bool:
         spec = SpecifierSet(version_range.replace(" ", ""))

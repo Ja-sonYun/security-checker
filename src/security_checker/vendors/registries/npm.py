@@ -5,6 +5,7 @@ import httpx
 from semantic_version import NpmSpec, Version
 from tenacity import retry, stop_after_attempt, wait_fixed
 
+from security_checker.cache import SqliteCache
 from security_checker.checkers.licenses._vendor_trait import LicenseCheckerTrait
 from security_checker.vendors._models import Dependency
 from security_checker.vendors.registries.github_security_advisory import (
@@ -12,6 +13,7 @@ from security_checker.vendors.registries.github_security_advisory import (
 )
 
 _npm_semaphore = asyncio.Semaphore(10)
+_cache = SqliteCache()
 
 
 class NpmJSRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
@@ -40,14 +42,23 @@ class NpmJSRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
         wait=wait_fixed(2),
     )
     async def query_license(self, package_name: str, version: str) -> str:
+        # Check cache first
+        cached_license = await _cache.get_license("npm", package_name, version)
+        if cached_license is not None:
+            return cached_license
+
         async with _npm_semaphore:
             try:
                 response = await self._npm_client.get(f"/{package_name}/{version}")
             except httpx.TimeoutException:
-                return "TIMEOUT"
+                license_result = "TIMEOUT"
+                await _cache.set_license("npm", package_name, version, license_result)
+                return license_result
 
             if response.status_code == 404:
-                return "UNKNOWN"
+                license_result = "UNKNOWN"
+                await _cache.set_license("npm", package_name, version, license_result)
+                return license_result
             if response.status_code != 200:
                 response.raise_for_status()
 
@@ -71,7 +82,9 @@ class NpmJSRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
                     elif isinstance(licenses[0], str):
                         license_info = licenses[0]
 
-            return license_info if license_info else "UNKNOWN"
+            license_result = license_info if license_info else "UNKNOWN"
+            await _cache.set_license("npm", package_name, version, license_result)
+            return license_result
 
     def is_in_version_range(self, version: str, version_range: str) -> bool:
         spec = NpmSpec(version_range)
