@@ -2,9 +2,11 @@ import asyncio
 import os
 
 import httpx
+from semantic_version import NpmSpec, Version
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from security_checker.checkers.licenses._vendor_trait import LicenseCheckerTrait
+from security_checker.vendors._models import Dependency
 from security_checker.vendors.registries.github_security_advisory import (
     GithubSecurityAdvisoryRegistry,
 )
@@ -70,3 +72,7 @@ class NpmJSRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
                         license_info = licenses[0]
 
             return license_info if license_info else "UNKNOWN"
+
+    def is_in_version_range(self, version: str, version_range: str) -> bool:
+        spec = NpmSpec(version_range)
+        return Version(version) in spec

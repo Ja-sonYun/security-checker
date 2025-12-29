@@ -6,7 +6,7 @@ A comprehensive command-line tool to check security-related issues in your proje
 
 - **Vulnerability Scanning**: Check for known security vulnerabilities in your project dependencies
 - **License Compliance**: Verify and analyze license compatibility of your dependencies
-- **Multi-Package Manager Support**: Works with Poetry, npm, pnpm, pip (requirements.txt), and Rye
+- **Multi-Package Manager Support**: Works with Poetry, npm, pnpm, pip (requirements.txt), and uv
 - **Multiple Output Formats**: Support for stdout, Slack notifications, and Markdown reports
 - **Extensible Architecture**: Easy to add new package managers and notification methods
 
@@ -64,7 +64,7 @@ export LLM_ENDPOINT="https://api.openai.com/v1"
 ### Requirements
 
 - Python >= 3.10
-- Rye
+- [uv](https://docs.astral.sh/uv/) 0.4 or newer
 
 ### Setup Development Environment
 
@@ -72,7 +72,8 @@ export LLM_ENDPOINT="https://api.openai.com/v1"
 git clone https://github.com/Ja-sonYun/security-checker.git
 cd security-checker
 
-rye sync
+uv sync --group dev
+source .venv/bin/activate
 ```
 
 ### Code Quality
@@ -85,8 +86,8 @@ This project uses:
 Run code quality checks:
 
 ```bash
-ruff check .
-ruff format .
+uv run ruff check .
+uv run ruff format .
 ```
 
 ### Project Structure

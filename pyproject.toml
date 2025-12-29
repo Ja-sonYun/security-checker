@@ -1,6 +1,6 @@
 [project]
 name = "security-checker"
-version = "0.2.2"
+version = "0.2.3"
 description = "A comprehensive command-line tool to check security-related issues in your projects, including vulnerability scanning and license compliance checking."
 authors = [
     { name = "Ja-sonYun", email = "killa30867@gmail.com" }
@@ -32,6 +32,9 @@ dependencies = [
     "aiohttp>=3.12.12",
     "gitpython>=3.1.44",
     "tenacity>=9.1.2",
+    "semantic-version>=2.10.0",
+    "packaging>=25.0",
+    "tomli>=2.0.1; python_version < \"3.11\"",
 ]
 readme = "README.md"
 license = { text = "MIT" }
@@ -49,9 +52,11 @@ security-checker = "security_checker.cli:main"
 requires = ["hatchling==1.26.3", "hatch-vcs"]
 build-backend = "hatchling.build"
 
-[tool.rye]
+[tool.uv]
 managed = true
-dev-dependencies = [
+
+[dependency-groups]
+dev = [
     "ruff>=0.11.13",
     "ty>=0.0.1a10",
 ]

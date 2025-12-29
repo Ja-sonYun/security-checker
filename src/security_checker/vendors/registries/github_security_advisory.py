@@ -102,11 +102,18 @@ class GithubSecurityAdvisoryRegistry(VulnerabilityCheckerTrait):
         return query, variables, [f"a{idx}" for idx in range(len(deps))]
 
     def _extract_vulnerabilities(
-        self, raw_nodes: list[dict[str, Any]]
+        self,
+        version: str,
+        raw_nodes: list[dict[str, Any]],
     ) -> list[VulnerabilityInfo]:
         extracted: list[VulnerabilityInfo] = []
         for node in raw_nodes:
             vulnerable_version_range = node.get("vulnerableVersionRange", "UNKNOWN")
+            try:
+                if not self.is_in_version_range(version, vulnerable_version_range):
+                    continue
+            except ValueError:
+                ...
             advisory = node.get("advisory", {})
             identifiers = advisory.get("identifiers", [])
             vuln_id = next(
@@ -160,7 +167,7 @@ class GithubSecurityAdvisoryRegistry(VulnerabilityCheckerTrait):
                 .get("securityVulnerabilities", {})
                 .get("nodes", [])
             )
-            vulns = self._extract_vulnerabilities(raw_nodes)
+            vulns = self._extract_vulnerabilities(version, raw_nodes)
             return VulnerablePackage(
                 name=package_name,
                 version=version,
@@ -190,7 +197,7 @@ class GithubSecurityAdvisoryRegistry(VulnerabilityCheckerTrait):
                 data = resp.json().get("data", {})
                 for dep, alias in zip(chunk, aliases):
                     raw_nodes = data.get(alias, {}).get("nodes", [])
-                    vulns = self._extract_vulnerabilities(raw_nodes)
+                    vulns = self._extract_vulnerabilities(dep.version, raw_nodes)
                     results.append(
                         VulnerablePackage(
                             name=dep.name,

@@ -1,39 +1,44 @@
 {
-  description = "A Nix-flake-based Python development environment";
+  description = "Python3.13 development environment";
 
   inputs.nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
 
   outputs =
-    { self, nixpkgs }:
+    { nixpkgs, ... }:
     let
-      supportedSystems = [
-        "x86_64-linux"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "aarch64-darwin"
-      ];
-      forEachSupportedSystem =
+      systems = nixpkgs.lib.systems.flakeExposed;
+      forEachSystem =
         f:
-        nixpkgs.lib.genAttrs supportedSystems (
+        nixpkgs.lib.genAttrs systems (
           system:
           f {
+            inherit system;
             pkgs = import nixpkgs { inherit system; };
           }
         );
     in
     {
-      devShells = forEachSupportedSystem (
-        { pkgs }:
+      devShells = forEachSystem (
+        { pkgs, ... }:
         {
           default = pkgs.mkShell {
             packages = with pkgs; [
               uv
-              rye
             ];
+            shellHook = ''
+              if [ ! -d "$UV_PROJECT_ENVIRONMENT" ]; then
+                uv venv "$UV_PROJECT_ENVIRONMENT" --python "$UV_PYTHON"
+              fi
+
+              source "$UV_PROJECT_ENVIRONMENT/bin/activate"
+            '';
+            env = {
+              UV_PROJECT_ENVIRONMENT = ".venv";
+              UV_PYTHON = "${pkgs.python313}/bin/python3";
+              UV_NO_SYNC = "1";
+              UV_PYTHON_DOWNLOADS = "never";
+            };
           };
-          shellHook = ''
-            source .venv/bin/activate
-          '';
         }
       );
     };

@@ -11,21 +11,30 @@ permissions:
 jobs:
   pypi:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install the latest version of rye
-        uses: eifinger/setup-rye@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
 
-      - name: Sync deps
-        run: rye sync --no-dev
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
 
-      - name: Build
-        run: rye build --wheel
+      - name: Sync dependencies
+        run: uv sync --locked --no-dev
 
-      - name: Build & publish
+      - name: Build distributions
+        run: uv build --no-sources
+
+      - name: Publish to PyPI
         env:
           PYPI_KEY: ${{ secrets.PYPI_API_TOKEN }}
-        run: rye publish --token "$PYPI_KEY" --yes
+        run: uv publish --token "$PYPI_KEY" --yes

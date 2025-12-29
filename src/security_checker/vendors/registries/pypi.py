@@ -2,6 +2,8 @@ import asyncio
 import os
 
 import httpx
+from packaging.specifiers import SpecifierSet
+from packaging.version import Version
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from security_checker.checkers.licenses._vendor_trait import LicenseCheckerTrait
@@ -84,3 +86,7 @@ class PyPiRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
                 license_info = package_info.get("license_expression", None)
 
             return license_info if license_info else "UNKNOWN"
+
+    def is_in_version_range(self, version: str, version_range: str) -> bool:
+        spec = SpecifierSet(version_range.replace(" ", ""))
+        return Version(version) in spec

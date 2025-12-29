@@ -37,6 +37,7 @@ from security_checker.vendors.pnpm import PnpmVendor
 from security_checker.vendors.poetry import PoetryVendor
 from security_checker.vendors.requirements_txt import RequirementsTxtVendor
 from security_checker.vendors.rye import RyeVendor
+from security_checker.vendors.uv import UvVendor
 
 Vendors = Literal[
     "poetry",
@@ -44,6 +45,7 @@ Vendors = Literal[
     "npm",
     "requirements_txt",
     "rye",
+    "uv",
 ]
 supported_vendors: dict[Vendors, type[VendorBase]] = {
     "poetry": PoetryVendor,
@@ -51,6 +53,7 @@ supported_vendors: dict[Vendors, type[VendorBase]] = {
     "npm": NpmVendor,
     "requirements_txt": RequirementsTxtVendor,
     "rye": RyeVendor,
+    "uv": UvVendor,
 }
 
 Notifiers = Literal[
@@ -70,7 +73,7 @@ class BaseCheckerSetting(BaseSettings):
         description="Path to the project directory to check.",
     )
     vendor: list[Vendors] = Field(
-        default=["poetry", "pnpm", "npm", "requirements_txt", "rye"],
+        default=["poetry", "pnpm", "npm", "requirements_txt", "rye", "uv"],
         description="List of vendors to use for license checking.",
         validation_alias=AliasChoices("v", "vendor"),
     )
