@@ -4,9 +4,11 @@ from collections.abc import Sequence
 from typing import TypeGuard
 
 from security_checker.checkers._base import LockFileBaseTrait
+from security_checker.checkers.licenses._cache import LicenseCache
 from security_checker.checkers.licenses._models import PackageLicense
 from security_checker.vendors._base import VendorBase
 from security_checker.vendors._models import Dependency
+from sqlmodel import select
 
 
 class LicenseCheckerTrait(VendorBase, LockFileBaseTrait):

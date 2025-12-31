@@ -10,10 +10,6 @@ from security_checker.vendors._models import Dependency
 
 
 class VulnerabilityCheckerTrait(VendorBase, LockFileBaseTrait):
-    @property
-    @abstractmethod
-    def get_echosystem_name(self) -> str: ...
-
     @abstractmethod
     async def query_vulnerabilities(
         self,

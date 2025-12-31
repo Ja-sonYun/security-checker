@@ -6,9 +6,6 @@ from security_checker.checkers.vulnerabilities._models import (
     VulnerabilityCheckResult,
     VulnerablePackage,
 )
-from security_checker.checkers.vulnerabilities._settings import (
-    VulnerabilityCheckerSettings,
-)
 from security_checker.checkers.vulnerabilities._vendor_trait import (
     VulnerabilityCheckerTrait,
 )
@@ -23,14 +20,6 @@ class VulnerabilityChecker(
         VulnerabilityCheckResult,
     ]
 ):
-    def __init__(self, settings: VulnerabilityCheckerSettings | None = None) -> None:
-        super().__init__()
-        self.settings = settings or VulnerabilityCheckerSettings()
-        console.verbose(
-            f"{self.__class__.__name__} settings: "
-            f"{self.settings.model_dump_json(indent=2)}"
-        )
-
     @property
     def name(self) -> str:
         return "Vulnerability Checker"
@@ -62,7 +51,6 @@ class VulnerabilityChecker(
 
         return VulnerabilityCheckResult(
             dependencies=results,
-            settings=self.settings,
         )
 
     async def _use_vendor(
@@ -90,7 +78,6 @@ class VulnerabilityChecker(
 
         return VulnerabilityCheckResult(
             dependencies=vulnerability_infos,
-            settings=self.settings,
         )
 
     async def _parse_package(

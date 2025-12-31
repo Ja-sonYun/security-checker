@@ -62,7 +62,7 @@ class GithubSecurityAdvisoryRegistry(VulnerabilityCheckerTrait):
     ) -> tuple[str, dict[str, Any], list[str]]:
         alias_parts: list[str] = []
         variables: dict[str, Any] = {
-            "ecosystem": self.get_echosystem_name.upper(),
+            "ecosystem": self.get_ecosystem_name.upper(),
         }
 
         for idx, dep in enumerate(deps):
@@ -154,7 +154,7 @@ class GithubSecurityAdvisoryRegistry(VulnerabilityCheckerTrait):
             query = self._make_query()
             variables = {
                 "package": package_name,
-                "ecosystem": self.get_echosystem_name.upper(),
+                "ecosystem": self.get_ecosystem_name.upper(),
             }
             resp = await self._github_api_client.post(
                 str(self._github_graphql_url),

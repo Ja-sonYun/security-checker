@@ -7,21 +7,12 @@ from security_checker.checkers.licenses._models import (
     LicenseCheckResult,
     PackageLicense,
 )
-from security_checker.checkers.licenses._settings import LicenseCheckerSettings
 from security_checker.checkers.licenses._vendor_trait import LicenseCheckerTrait
 from security_checker.console import console
 from security_checker.utils.git import find_git_root
 
 
 class LicenseChecker(CheckerBase[LicenseCheckerTrait, LicenseCheckResult]):
-    def __init__(self, settings: LicenseCheckerSettings | None = None) -> None:
-        super().__init__()
-        self.settings = settings or LicenseCheckerSettings()
-        console.verbose(
-            f"{self.__class__.__name__} settings: "
-            f"{self.settings.model_dump_json(indent=2)}"
-        )
-
     @property
     def name(self) -> str:
         return "License Checker"
@@ -51,7 +42,7 @@ class LicenseChecker(CheckerBase[LicenseCheckerTrait, LicenseCheckResult]):
                     )
                 results[root] = licenses
 
-        return LicenseCheckResult(dependencies=results, settings=self.settings)
+        return LicenseCheckResult(dependencies=results)
 
     async def _use_vendor(
         self,
@@ -74,7 +65,7 @@ class LicenseChecker(CheckerBase[LicenseCheckerTrait, LicenseCheckResult]):
             except ValueError as e:
                 console.error(f"Error parsing {path}: {e}")
 
-        return LicenseCheckResult(dependencies=license_infos, settings=self.settings)
+        return LicenseCheckResult(dependencies=license_infos)
 
     async def _parse_package(
         self,

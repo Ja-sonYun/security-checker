@@ -6,7 +6,7 @@ from security_checker.console import console
 from security_checker.utils.git import get_git_info
 
 
-class NotifierBase(ABC):
+class OutputBase(ABC):
     def __init__(self, path: Path) -> None:
         self.path = path
         git_info = get_git_info(path)
@@ -18,9 +18,9 @@ class NotifierBase(ABC):
         self.repository_url = f"https://github.com/{self.user}/{self.repo}"
 
         console.verbose(
-            f"Notifier initialized for repository {self.user}/{self.repo} "
+            f"Output initialized for repository {self.user}/{self.repo} "
             f"on branch {self.branch} with remote {self.remote}."
         )
 
     @abstractmethod
-    async def send_notification(self, result: CheckResultInterface) -> bool: ...
+    async def write_output(self, result: CheckResultInterface) -> bool: ...

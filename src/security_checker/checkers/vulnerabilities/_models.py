@@ -4,10 +4,6 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from security_checker.checkers._models import CheckResultBase
-from security_checker.checkers.vulnerabilities._settings import (
-    VulnerabilityCheckerSettings,
-)
-from security_checker.utils.text import strip_codeblock
 from security_checker.vendors._models import Dependency, DependencyRoot
 
 
@@ -25,8 +21,6 @@ class VulnerablePackage(Dependency):
 
 
 class VulnerabilityCheckResult(CheckResultBase):
-    settings: VulnerabilityCheckerSettings
-
     dependencies: Mapping[DependencyRoot, Sequence[VulnerablePackage]]
 
     @property
@@ -128,43 +122,3 @@ class VulnerabilityCheckResult(CheckResultBase):
             )
 
         return details
-
-    async def get_critical_vulnerabilities_summary(self) -> str:
-        vulnerabilities = ""
-        for root, pkgs in self.dependencies.items():
-            vuln_lines = [
-                f"{pkg.name} ({pkg.version}): {v.vulnerability_id} "
-                f"({v.severity}) - {v.description}"
-                for pkg in pkgs
-                for v in pkg.vulnerabilities
-                if v.severity.upper() in {"CRITICAL", "HIGH"}
-            ]
-            if vuln_lines:
-                vuln_lines.sort()
-                vulnerabilities += f"{root}:\n" + "\n".join(vuln_lines) + "\n\n"
-
-        client = self.settings.get_client()
-        response = await client.chat.completions.create(
-            model=self.settings.llm_summarize_model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": self.settings.llm_vulnerability_summarize_prompt,
-                },
-                {
-                    "role": "user",
-                    "content": (
-                        "Please analyze the following vulnerabilities:\n"
-                        f"{vulnerabilities or 'No critical vulnerabilities found.'}"
-                    ),
-                },
-            ],
-        )
-
-        summary = response.choices[0].message.content or "No summary available."
-        footer = "Visit {repository_url}/security/dependabot for more details."
-
-        return f"{summary}\n\n{footer}"
-
-    async def llm_summary(self) -> str:
-        return strip_codeblock(await self.get_critical_vulnerabilities_summary())

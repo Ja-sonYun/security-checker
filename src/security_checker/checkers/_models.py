@@ -11,9 +11,6 @@ class CheckResultInterface(ABC):
     @abstractmethod
     def get_details(self) -> Sequence[str]: ...
 
-    @abstractmethod
-    async def llm_summary(self) -> str: ...
-
     @property
     @abstractmethod
     def checker_name(self) -> str: ...

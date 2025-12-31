@@ -27,10 +27,7 @@ from security_checker.checkers.vulnerabilities.vulnerabilities import (
     VulnerabilityChecker,
 )
 from security_checker.console import console
-from security_checker.notifiers._base import NotifierBase
-from security_checker.notifiers.markdown import MarkdownNotifier
-from security_checker.notifiers.slack import SlackNotifier
-from security_checker.notifiers.stdout import StdoutNotifier
+from security_checker.outputs.stdout import StdoutOutput
 from security_checker.vendors._base import VendorBase
 from security_checker.vendors.npm import NpmVendor
 from security_checker.vendors.pnpm import PnpmVendor
@@ -56,17 +53,6 @@ supported_vendors: dict[Vendors, type[VendorBase]] = {
     "uv": UvVendor,
 }
 
-Notifiers = Literal[
-    "stdout",
-    "slack",
-    "markdown",
-]
-supported_notifiers: dict[Notifiers, type[NotifierBase]] = {
-    "stdout": StdoutNotifier,
-    "slack": SlackNotifier,
-    "markdown": MarkdownNotifier,
-}
-
 
 class BaseCheckerSetting(BaseSettings):
     path: CliPositionalArg[str] = Field(
@@ -76,11 +62,6 @@ class BaseCheckerSetting(BaseSettings):
         default=["poetry", "pnpm", "npm", "requirements_txt", "rye", "uv"],
         description="List of vendors to use for license checking.",
         validation_alias=AliasChoices("v", "vendor"),
-    )
-    notify: list[Notifiers] = Field(
-        default=["stdout"],
-        description="List of notifiers to use for reporting results.",
-        validation_alias=AliasChoices("n", "notify"),
     )
     verbose: CliImplicitFlag[bool] = Field(
         description="Enable verbose output.",
@@ -110,13 +91,7 @@ async def _handle_license(args: LicenseCheckerSettings) -> None:
             )
         vendors.append(vendor_class())
     console.verbose(f"Using vendors: {args.vendor}")
-    notifiers: list[NotifierBase] = []
-    for notifier_name in args.notify:
-        notifier_class = supported_notifiers.get(notifier_name)
-        if not notifier_class:
-            raise ValueError(f"Notifier {notifier_name} is not supported.")
-        notifiers.append(notifier_class(path))
-    console.verbose(f"Using vendors: {args.vendor}")
+    output = StdoutOutput(path)
 
     license_checker = LicenseChecker()
 
@@ -129,10 +104,8 @@ async def _handle_license(args: LicenseCheckerSettings) -> None:
         vendors=vendors,
     )
 
-    console.verbose("Sending notifications for license results.")
-    await asyncio.gather(
-        *[notifier.send_notification(result=result) for notifier in notifiers]
-    )
+    console.verbose("Writing output for license results.")
+    await output.write_output(result=result)
 
 
 async def _handle_vulnerability(args: VulnerabilityCheckerSettings) -> None:
@@ -146,13 +119,7 @@ async def _handle_vulnerability(args: VulnerabilityCheckerSettings) -> None:
             )
         vendors.append(vendor_class())
     console.verbose(f"Using vendors: {args.vendor}")
-    notifiers: list[NotifierBase] = []
-    for notifier_name in args.notify:
-        notifier_class = supported_notifiers.get(notifier_name)
-        if not notifier_class:
-            raise ValueError(f"Notifier {notifier_name} is not supported.")
-        notifiers.append(notifier_class(path))
-    console.verbose(f"Using notifiers: {args.notify}")
+    output = StdoutOutput(path)
 
     vulnerability_checker = VulnerabilityChecker()
 
@@ -165,10 +132,8 @@ async def _handle_vulnerability(args: VulnerabilityCheckerSettings) -> None:
         vendors=vendors,
     )
 
-    console.verbose("Sending notifications for vulnerability results.")
-    await asyncio.gather(
-        *[notifier.send_notification(result=result) for notifier in notifiers]
-    )
+    console.verbose("Writing output for vulnerability results.")
+    await output.write_output(result=result)
 
 
 async def cli() -> None:

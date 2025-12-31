@@ -32,7 +32,7 @@ class NpmJSRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
         self._npm_client = httpx.AsyncClient(base_url=str(self._npm_url))
 
     @property
-    def get_echosystem_name(self) -> str:
+    def get_ecosystem_name(self) -> str:
         return "NPM"
 
     @retry(

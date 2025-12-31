@@ -32,7 +32,7 @@ class PyPiRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
         self._pypi_client = httpx.AsyncClient(base_url=str(self._pypi_url))
 
     @property
-    def get_echosystem_name(self) -> str:
+    def get_ecosystem_name(self) -> str:
         return "PIP"
 
     @retry(
