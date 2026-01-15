@@ -1,0 +1,91 @@
+name: Security Checker (License)
+description: Run security-checker license with DB caching
+
+inputs:
+  check:
+    description: Check type to run (currently only license)
+    required: false
+    default: "license"
+  path:
+    description: Path to the project directory to check
+    required: false
+    default: "."
+  verbose:
+    description: Enable verbose output
+    required: false
+    default: "false"
+  ignore-packages:
+    description: Comma-separated package names to ignore
+    required: false
+    default: ""
+
+outputs:
+  stdout:
+    description: Stdout from security-checker license
+    value: ${{ steps.run_license.outputs.stdout }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Restore pip cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-security-checker-${{ hashFiles('**/poetry.lock', '**/package-lock.json', '**/pnpm-lock.yaml', '**/requirements*.txt', '**/uv.lock', '**/rye.lock', '**/Pipfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-security-checker-
+
+    - name: Prepare cache paths
+      shell: bash
+      run: |
+        mkdir -p "${{ runner.temp }}/security-checker"
+
+    - name: Restore license cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}/security-checker/license-cache.sqlite
+        key: ${{ runner.os }}-security-checker-license-${{ hashFiles('**/poetry.lock', '**/package-lock.json', '**/pnpm-lock.yaml', '**/requirements*.txt', '**/uv.lock', '**/rye.lock', '**/Pipfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-security-checker-license-
+
+    - name: Install security-checker
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install --upgrade "${{ github.action_path }}"
+
+    - name: Run license check
+      id: run_license
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [[ "${{ inputs.check }}" != "license" ]]; then
+          echo "Unsupported check: ${{ inputs.check }}"
+          echo "Only 'license' is supported right now"
+          exit 1
+        fi
+        args=()
+        if [[ "${{ inputs.verbose }}" == "true" ]]; then
+          args+=(--verbose)
+        fi
+        if [[ -n "${{ inputs.ignore-packages }}" ]]; then
+          args+=(--ignore-packages "${{ inputs.ignore-packages }}")
+        fi
+        set +e
+        output="$(security-checker license "${{ inputs.path }}" --db "${{ runner.temp }}/security-checker/license-cache.sqlite" "${args[@]}")"
+        status=$?
+        set -e
+        printf '%s\n' "$output"
+        {
+          echo "stdout<<EOF"
+          echo "$output"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+        if [[ $status -ne 0 ]]; then
+          exit $status
+        fi

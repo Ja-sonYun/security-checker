@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 from datetime import datetime
 from typing import Any, Sequence
@@ -14,8 +15,8 @@ from security_checker.checkers.vulnerabilities._models import (
 from security_checker.checkers.vulnerabilities._vendor_trait import (
     VulnerabilityCheckerTrait,
 )
+from security_checker.vendors._base import api_semaphore
 
-_github_semaphore = asyncio.Semaphore(10)
 BULK_CHUNK_SIZE = 50
 
 
@@ -30,12 +31,13 @@ class GithubSecurityAdvisoryRegistry(VulnerabilityCheckerTrait):
         self._github_graphql_url = github_graphql_url
         self._parallel_requests = parallel_requests
         self._github_token = github_token
+        headers = {"Content-Type": "application/json"}
+        if self._github_token:
+            headers["Authorization"] = f"Bearer {self._github_token}"
         self._github_api_client = httpx.AsyncClient(
             base_url=str(self._github_graphql_url),
-            headers={
-                "Authorization": f"Bearer {self._github_token}",
-                "Content-Type": "application/json",
-            },
+            headers=headers,
+            timeout=httpx.Timeout(30.0, connect=10.0),
         )
 
     def _make_query(self) -> str:
@@ -150,7 +152,7 @@ class GithubSecurityAdvisoryRegistry(VulnerabilityCheckerTrait):
     async def query_vulnerabilities(
         self, package_name: str, version: str
     ) -> VulnerablePackage:
-        async with _github_semaphore:
+        async with api_semaphore:
             query = self._make_query()
             variables = {
                 "package": package_name,
@@ -161,12 +163,15 @@ class GithubSecurityAdvisoryRegistry(VulnerabilityCheckerTrait):
                 json={"query": query, "variables": variables},
             )
             resp.raise_for_status()
-            raw_nodes = (
-                resp.json()
-                .get("data", {})
-                .get("securityVulnerabilities", {})
-                .get("nodes", [])
-            )
+            try:
+                raw_nodes = (
+                    resp.json()
+                    .get("data", {})
+                    .get("securityVulnerabilities", {})
+                    .get("nodes", [])
+                )
+            except json.JSONDecodeError:
+                raw_nodes = []
             vulns = self._extract_vulnerabilities(version, raw_nodes)
             return VulnerablePackage(
                 name=package_name,
@@ -188,13 +193,16 @@ class GithubSecurityAdvisoryRegistry(VulnerabilityCheckerTrait):
 
         async def _process_chunk(chunk: Sequence[Dependency]) -> None:
             query, variables, aliases = self._build_bulk_query(chunk)
-            async with _github_semaphore:
+            async with api_semaphore:
                 resp = await self._github_api_client.post(
                     str(self._github_graphql_url),
                     json={"query": query, "variables": variables},
                 )
                 resp.raise_for_status()
-                data = resp.json().get("data", {})
+                try:
+                    data = resp.json().get("data", {})
+                except json.JSONDecodeError:
+                    data = {}
                 for dep, alias in zip(chunk, aliases):
                     raw_nodes = data.get(alias, {}).get("nodes", [])
                     vulns = self._extract_vulnerabilities(dep.version, raw_nodes)

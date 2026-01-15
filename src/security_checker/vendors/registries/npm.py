@@ -1,4 +1,4 @@
-import asyncio
+import json
 import os
 
 import httpx
@@ -6,12 +6,10 @@ from semantic_version import NpmSpec, Version
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from security_checker.checkers.licenses._vendor_trait import LicenseCheckerTrait
-from security_checker.vendors._models import Dependency
+from security_checker.vendors._base import api_semaphore
 from security_checker.vendors.registries.github_security_advisory import (
     GithubSecurityAdvisoryRegistry,
 )
-
-_npm_semaphore = asyncio.Semaphore(10)
 
 
 class NpmJSRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
@@ -29,7 +27,10 @@ class NpmJSRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
             github_token=github_token,
         )
         self._npm_url = npm_url
-        self._npm_client = httpx.AsyncClient(base_url=str(self._npm_url))
+        self._npm_client = httpx.AsyncClient(
+            base_url=str(self._npm_url),
+            timeout=httpx.Timeout(30.0, connect=10.0),
+        )
 
     @property
     def get_ecosystem_name(self) -> str:
@@ -40,7 +41,7 @@ class NpmJSRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
         wait=wait_fixed(2),
     )
     async def query_license(self, package_name: str, version: str) -> str:
-        async with _npm_semaphore:
+        async with api_semaphore:
             try:
                 response = await self._npm_client.get(f"/{package_name}/{version}")
             except httpx.TimeoutException:
@@ -51,7 +52,10 @@ class NpmJSRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
             if response.status_code != 200:
                 response.raise_for_status()
 
-            data = response.json()
+            try:
+                data = response.json()
+            except json.JSONDecodeError:
+                return "UNKNOWN"
             license_info: str | None = None
 
             # Check the license field (can be string or object)

@@ -1,0 +1,48 @@
+name: Action Test (Local)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "action.yml"
+      - ".github/workflows/action-test.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "action.yml"
+      - ".github/workflows/action-test.yml"
+  workflow_dispatch:
+    inputs:
+      check:
+        description: Check type to run
+        required: false
+        default: license
+      path:
+        description: Path to the project directory to check
+        required: false
+        default: "."
+      verbose:
+        description: Enable verbose output
+        required: false
+        default: "false"
+
+jobs:
+  license:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run local action
+        id: security_checker
+        uses: ./
+        with:
+          check: ${{ github.event.inputs.check || 'license' }}
+          path: ${{ github.event.inputs.path || '.' }}
+          verbose: ${{ github.event.inputs.verbose || 'false' }}
+
+      - name: Show output
+        shell: bash
+        env:
+          SECURITY_CHECKER_OUTPUT: ${{ steps.security_checker.outputs.stdout }}
+        run: |
+          printf '%s\n' "$SECURITY_CHECKER_OUTPUT"

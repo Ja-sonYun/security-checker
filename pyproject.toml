@@ -34,6 +34,8 @@ dependencies = [
     "packaging>=25.0",
     "tomli>=2.0.1; python_version < \"3.11\"",
     "sqlmodel>=0.0.31",
+    "aiosqlite>=0.22.1",
+    "greenlet>=3.3.0",
 ]
 readme = "README.md"
 license = { text = "MIT" }
@@ -58,6 +60,7 @@ managed = true
 dev = [
     "pytest>=9.0.2",
     "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
     "ruff>=0.11.13",
     "ty>=0.0.1a10",
 ]
@@ -68,7 +71,14 @@ allow-direct-references = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = ["-ra"]
+addopts = ["-ra", "--cov=security_checker", "--cov-report=term-missing"]
+
+[tool.coverage.run]
+branch = true
+source = ["security_checker"]
+
+[tool.coverage.report]
+skip_covered = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/security_checker"]

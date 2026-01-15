@@ -39,6 +39,7 @@ _LICENSE_SCORE: dict[Literal[1, 2, 3], tuple[str, ...]] = {
     ),
     1: (  # Permissive / public-domain–like
         "apache license",
+        "apache software license",
         "apache-2",
         "apache 1.1",
         "bsd 3",
@@ -47,6 +48,7 @@ _LICENSE_SCORE: dict[Literal[1, 2, 3], tuple[str, ...]] = {
         "bsd-2",
         "bsd-4",
         "bsd license",
+        "bsd",
         "mit license",
         "mit-0",
         "mit",
@@ -72,7 +74,9 @@ _LICENSE_SCORE: dict[Literal[1, 2, 3], tuple[str, ...]] = {
 
 
 def _normalize_license_name(name: str) -> str:
-    return name.lower().replace(" ", "").replace("-", " ").replace("_", " ").strip()
+    text = name.lower()
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    return " ".join(text.split())
 
 
 _KEYWORD_TO_SCORE: dict[str, Literal[1, 2, 3]] = {
@@ -84,7 +88,8 @@ _KEYWORD_TO_SCORE: dict[str, Literal[1, 2, 3]] = {
 
 def detect_license_score(raw: str) -> Literal[0, 1, 2, 3]:
     text = _normalize_license_name(raw)
+    compact = text.replace(" ", "")
     for kw, score in _KEYWORD_TO_SCORE.items():
-        if kw in text:
+        if kw in text or kw.replace(" ", "") in compact:
             return score
     return 0  # Unknown license score

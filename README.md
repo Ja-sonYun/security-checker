@@ -1,18 +1,8 @@
 # Security Checker
 
-A comprehensive command-line tool to check security-related issues in your projects, including vulnerability scanning and license compliance checking.
+A simple CLI to check dependency licenses and vulnerabilities.
 
-## Features
-
-- **Vulnerability Scanning**: Check for known security vulnerabilities in your project dependencies
-- **License Compliance**: Verify and analyze license compatibility of your dependencies
-- **Multi-Package Manager Support**: Works with Poetry, npm, pnpm, pip (requirements.txt), and uv
-- **Output to Stdout**: Print summaries and details directly to stdout
-- **Extensible Architecture**: Easy to add new package managers
-
-## Installation
-
-### From PyPI
+## Install
 
 ```bash
 pip install security-checker
@@ -20,79 +10,57 @@ pip install security-checker
 
 ## Usage
 
-Security Checker provides two main commands: `license` for license checking and `vuln` for vulnerability scanning.
-
-### License Checking
-
-Check license compliance of your project dependencies:
-
 ```bash
-# With default settings (all supported package managers)
+# License check
 security-checker license /path/to/your/project
-```
 
-### Vulnerability Scanning
+# License check (ignore packages)
+security-checker license /path/to/your/project --ignore-packages package-a,package-b
 
-Scan for security vulnerabilities in your dependencies:
-
-```bash
-# With default settings (all supported package managers)
+# Vulnerability check
 security-checker vuln /path/to/your/project
 ```
 
-## Development
+License check exits with non-zero status when strong copyleft licenses are found.
 
-### Requirements
-
-- Python >= 3.10
-- [uv](https://docs.astral.sh/uv/) 0.4 or newer
-
-### Setup Development Environment
+## DB Cache (License Only)
 
 ```bash
-git clone https://github.com/Ja-sonYun/security-checker.git
-cd security-checker
-
-uv sync --group dev
-source .venv/bin/activate
+security-checker license /path/to/your/project --db /path/to/cache.sqlite
 ```
 
-### Code Quality
+## GitHub Actions (Composite Action)
 
-This project uses:
+This action uses a SQLite cache database for license checks.
 
-- **Ruff**: For linting and code formatting
-- **Type hints**: Full type annotation coverage
+```yaml
+name: License Check
 
-Run code quality checks:
+on:
+  pull_request:
 
-```bash
-uv run ruff check .
-uv run ruff format .
+jobs:
+  license:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Ja-sonYun/security-checker@v1
+        id: license
+        with:
+          check: license
+          path: .
+          ignore-packages: package-a,package-b
+
+      - name: Show output
+        run: |
+          echo "${{ steps.license.outputs.stdout }}"
+
+      - name: Write summary
+        run: |
+          {
+            echo "## Security Checker"
+            echo ""
+            echo "### License Summary"
+            echo "${{ steps.license.outputs.stdout }}"
+          } >> "$GITHUB_STEP_SUMMARY"
 ```
-
-### Project Structure
-
-```
-src/security_checker/
-├── checkers/            # Core checking logic
-│   ├── credentials/     # Credential scanning (TODO)
-│   ├── licenses/        # License compliance checking
-│   └── vulnerabilities/ # Vulnerability scanning
-├── outputs/             # Stdout output handlers
-├── vendors/             # Package manager integrations
-├── utils/               # Utility functions
-└── cli.py               # Command-line interface
-```
-
-### Adding New Package Managers
-
-1. Create a new vendor class in `src/security_checker/vendors/`
-2. Implement the required traits for license and/or vulnerability checking
-3. Add the vendor to the supported vendors list in `cli.py`
-
-## To-Do
-
-- [ ] Implement credential scanning
-- [ ] Support result caching to avoid redundant checks
-- [ ] Add unit tests for all components

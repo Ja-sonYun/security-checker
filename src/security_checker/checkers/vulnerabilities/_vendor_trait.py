@@ -42,13 +42,11 @@ class VulnerabilityCheckerTrait(VendorBase, LockFileBaseTrait):
         ]
 
 
-def is_vuulnerability_checker_trait(
-    obj: type | None,
+def is_vulnerability_checker_trait(
+    obj: type[VendorBase] | None,
 ) -> TypeGuard[type[VulnerabilityCheckerTrait]]:
     if obj is None:
         return False
-    return (
-        issubclass(obj, VulnerabilityCheckerTrait)
-        and issubclass(obj, VendorBase)
-        and issubclass(obj, LockFileBaseTrait)
+    return issubclass(obj, VulnerabilityCheckerTrait) and issubclass(
+        obj, LockFileBaseTrait
     )

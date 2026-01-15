@@ -1,0 +1,6 @@
+# Example requirements file
+requests==2.32.0
+urllib3>=2.2.0
+idna<=3.7
+charset-normalizer~=3.3.2
+pyyaml

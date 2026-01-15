@@ -1,4 +1,4 @@
-import asyncio
+import json
 import os
 
 import httpx
@@ -7,11 +7,10 @@ from packaging.version import Version
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from security_checker.checkers.licenses._vendor_trait import LicenseCheckerTrait
+from security_checker.vendors._base import api_semaphore
 from security_checker.vendors.registries.github_security_advisory import (
     GithubSecurityAdvisoryRegistry,
 )
-
-_pypi_semaphore = asyncio.Semaphore(10)
 
 
 class PyPiRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
@@ -29,7 +28,10 @@ class PyPiRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
             github_token=github_token,
         )
         self._pypi_url = pypi_url
-        self._pypi_client = httpx.AsyncClient(base_url=str(self._pypi_url))
+        self._pypi_client = httpx.AsyncClient(
+            base_url=str(self._pypi_url),
+            timeout=httpx.Timeout(30.0, connect=10.0),
+        )
 
     @property
     def get_ecosystem_name(self) -> str:
@@ -40,7 +42,7 @@ class PyPiRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
         wait=wait_fixed(2),
     )
     async def query_license(self, package_name: str, version: str) -> str:
-        async with _pypi_semaphore:
+        async with api_semaphore:
             try:
                 response = await self._pypi_client.get(
                     f"{self._pypi_url}/{package_name}/{version}/json"
@@ -53,7 +55,10 @@ class PyPiRegistry(LicenseCheckerTrait, GithubSecurityAdvisoryRegistry):
             if response.status_code != 200:
                 response.raise_for_status()
 
-            data = response.json()
+            try:
+                data = response.json()
+            except json.JSONDecodeError:
+                return "UNKNOWN"
 
             # Check if the response contains the necessary information
             if "info" not in data or "license" not in data["info"]:

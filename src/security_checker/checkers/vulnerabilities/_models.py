@@ -55,7 +55,7 @@ class VulnerabilityCheckResult(CheckResultBase):
             all_vulnerabilities = [
                 (pkg, vuln) for pkg in pkgs for vuln in pkg.vulnerabilities
             ]
-            criticla_severity_vulns = [
+            critical_severity_vulns = [
                 (pkg, vuln)
                 for pkg, vuln in all_vulnerabilities
                 if severity_levels.get(vuln.severity.upper(), 0) == 4
@@ -102,7 +102,7 @@ class VulnerabilityCheckResult(CheckResultBase):
 
             _render_vulnerabilities(
                 "Critical Vulnerabilities (Immediate Action Required)",
-                criticla_severity_vulns,
+                critical_severity_vulns,
             )
             _render_vulnerabilities(
                 "High Vulnerabilities (Action Recommended)",

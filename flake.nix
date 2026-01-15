@@ -24,6 +24,7 @@
           default = pkgs.mkShell {
             packages = with pkgs; [
               uv
+              act
             ];
             shellHook = ''
               if [ ! -d "$UV_PROJECT_ENVIRONMENT" ]; then

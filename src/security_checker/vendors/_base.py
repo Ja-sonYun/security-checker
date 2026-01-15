@@ -1,20 +1,20 @@
-from abc import ABC, abstractproperty
-from pathlib import Path
+import asyncio
+from abc import ABC, abstractmethod
 from typing import ClassVar
 
 from security_checker.database import Database
 
+# Shared semaphore for rate limiting all external API calls
+api_semaphore = asyncio.Semaphore(10)
+
 
 class VendorBase(ABC):
-    db_path: ClassVar[Path | None] = None
+    db: ClassVar[Database | None] = None
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def name(self) -> str: ...
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def get_ecosystem_name(self) -> str: ...
-
-    def get_db(self) -> Database | None:
-        if self.db_path is None:
-            return None
-        return Database(db_path=self.db_path)

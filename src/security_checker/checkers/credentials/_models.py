@@ -14,29 +14,12 @@ class CredentialAlert(BaseModel):
     severity: str
 
 
-class DependencyRoot(BaseModel):
-    root: Path
-    package_manager: str
-
-    def __hash__(self):
-        return hash((self.root, self.package_manager))
-
-    def __str__(self):
-        return f"{self.package_manager}://{self.root}"
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, DependencyRoot):
-            return NotImplemented
-        return self.root == other.root and self.package_manager == other.package_manager
-
-    def __ne__(self, other: object) -> bool:
-        if not isinstance(other, DependencyRoot):
-            return NotImplemented
-        return not self.__eq__(other)
-
-
 class CredentialCheckResult(CheckResultBase):
     credentials: Sequence[CredentialAlert]
+
+    @property
+    def checker_name(self) -> str:
+        return "Credential Checker"
 
     def get_summary(self) -> str:
         return f"Found {len(self.credentials)} potential credential leaks."

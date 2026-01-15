@@ -7,6 +7,7 @@ from security_checker.checkers.credentials._models import (
     CredentialCheckResult,
 )
 from security_checker.checkers.credentials._vendor_trait import CredentialCheckerTrait
+from security_checker.console import console
 from security_checker.utils.git import find_git_root
 
 
@@ -59,6 +60,6 @@ class CredentialChecker(CheckerBase[CredentialCheckerTrait, CredentialCheckResul
                 )
                 all_credentials.extend(validated_credentials)
             except ValueError as e:
-                print(f"Error scanning {path}: {e}")
+                console.error(f"Error scanning {path}: {e}")
 
         return CredentialCheckResult(credentials=all_credentials)

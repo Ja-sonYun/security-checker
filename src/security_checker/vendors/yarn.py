@@ -4,11 +4,20 @@ from security_checker.vendors._models import Dependencies, Dependency
 from security_checker.vendors.registries.npm import NpmJSRegistry
 
 
-class YarnVendor(NpmJSRegistry):
-    """
-    IMPORTANT: This class not yet tested.
-    """
+def _parse_package_name(selector: str) -> str:
+    """Parse package name from yarn.lock selector.
 
+    Handles scoped packages like @types/node@^20.0.0
+    """
+    if selector.startswith("@"):
+        at_idx = selector.find("@", 1)
+        if at_idx == -1:
+            return selector
+        return selector[:at_idx]
+    return selector.rsplit("@", 1)[0]
+
+
+class YarnVendor(NpmJSRegistry):
     @property
     def name(self) -> str:
         return "Node.js Yarn"
@@ -47,8 +56,9 @@ class YarnVendor(NpmJSRegistry):
 
             if version:
                 for sel in selectors:
-                    name = sel.rsplit("@", 1)[0]
-                    entries[(name, version)] = True
+                    name = _parse_package_name(sel)
+                    if name:
+                        entries[(name, version)] = True
 
             while i < len(lines) and lines[i].strip():
                 i += 1
